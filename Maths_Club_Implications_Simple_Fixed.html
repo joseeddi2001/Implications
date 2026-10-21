@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Which implication is correct?</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f7f8fc;
+      --paper: #ffffff;
+      --ink: #192538;
+      --muted: #55667f;
+      --line: #dce3ef;
+      --blue: #3756c9;
+      --green: #13824d;
+      --red: #c4384d;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--page); color: var(--ink); font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+    main { width: min(1040px, 100%); margin: auto; padding: 26px 20px 52px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 21px; }
+    h1 { font-size: clamp(1.65rem, 3vw, 2.15rem); letter-spacing: -.035em; line-height: 1.22; margin: 0; font-weight: 750; }
+    button { font: inherit; }
+    button:focus-visible { outline: 3px solid #91a5ee; outline-offset: 3px; }
+    .reset { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: var(--paper); cursor: pointer; }
+    .reset:hover { background: #eef1f8; }
+    .list { display: grid; gap: 12px; }
+    .card { background: var(--paper); border: 1px solid var(--line); box-shadow: 0 2px 5px rgba(28,41,66,.03); border-radius: 14px; padding: 15px 17px; }
+    .pair { display: grid; grid-template-columns: minmax(0, 1fr) 66px minmax(0, 1fr); gap: 12px; align-items: stretch; }
+    .statement { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 73px; padding: 12px 15px; text-align: center; border-radius: 9px; background: #f5f7fb; font-size: 1.04rem; font-weight: 580; line-height: 1.48; letter-spacing: 0; overflow-wrap: break-word; }
+    .slot { min-height: 73px; border: 2px dashed #bfcae0; border-radius: 9px; background: #fbfcff; color: #96a3bc; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 2.35rem/1.02 "Cambria Math", "DejaVu Sans", Georgia, serif; }
+    .slot.selected { border-style: solid; border-color: #91a6f1; color: var(--blue); background: #f0f3ff; }
+    .card.correct .slot { color: var(--green); border-style: solid; border-color: #8fd6b2; background: #e9f8f0; }
+    .card.incorrect .slot { color: var(--red); border-style: solid; border-color: #eda8b3; background: #fff0f2; }
+    .slot .wrong-symbol { color: var(--red); text-decoration: line-through; font-size: 1.45rem; line-height: 1.1; }
+    .slot .correct-symbol { color: var(--green); font-size: 1.65rem; line-height: 1.1; }
+    .controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+    .choices { display: flex; align-items: center; gap: 7px; }
+    .choice { width: 51px; height: 37px; border: 1px solid #cbd5e5; border-radius: 8px; background: white; color: #415474; font: 1.55rem/1 "Cambria Math", "DejaVu Sans", Georgia, serif; cursor: pointer; }
+    .choice:hover:not(:disabled) { border-color: #7b8fc9; background: #f7f8ff; }
+    .choice[aria-pressed="true"] { background: #edf1ff; color: var(--blue); border-color: var(--blue); }
+    .card.correct .choice[aria-pressed="true"] { background: #e9f8f0; color: var(--green); border-color: #8fd6b2; }
+    .card.incorrect .choice[aria-pressed="true"] { background: #fff0f2; color: var(--red); border-color: #eda8b3; }
+    .choice:disabled { cursor: default; }
+    .submit { margin-left: auto; height: 37px; min-width: 96px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--blue); color: white; font-size: .96rem; font-weight: 650; cursor: pointer; }
+    .submit:disabled { background: #b9c3d7; cursor: default; }
+    /* Group complete mathematical expressions so operators and superscripts have correct spacing. */
+    .formula, .math-inline { display: inline-block; font-family: "Cambria Math", "STIX Two Math", "DejaVu Serif", Georgia, serif; font-weight: 500; white-space: nowrap; }
+    .formula { font-size: 1.14em; }
+    .math-inline { font-size: 1.1em; margin-right: .18em; }
+    .formula var, .math-inline var { font-style: italic; }
+    .formula sup, .math-inline sup { font-size: .65em; position: relative; vertical-align: baseline; top: -.5em; line-height: 0; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    @media (max-width: 640px) {
+      main { padding: 20px 11px 34px; }
+      header { margin-bottom: 16px; }
+      h1 { font-size: clamp(1.35rem, 5.5vw, 1.75rem); }
+      .card { padding: 11px; }
+      .pair { grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr); gap: 7px; }
+      .statement { padding: 10px 8px; min-height: 91px; font-size: .92rem; line-height: 1.4; }
+      .slot { min-height: 91px; font-size: 1.9rem; }
+      .choice { width: 46px; height: 39px; }
+      .submit { height: 39px; min-width: 84px; }
+    }
+    @media (max-width: 400px) {
+      .pair { grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr); gap: 5px; }
+      .statement { padding: 10px 6px; font-size: .85rem; }
+      .slot { font-size: 1.6rem; }
+      .slot .wrong-symbol { font-size: 1.15rem; }
+      .slot .correct-symbol { font-size: 1.3rem; }
+      .choice { width: 42px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Which implication is correct?</h1>
+    <button type="button" class="reset" id="reset" aria-label="Reset all answers" title="Reset all answers">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+  </header>
+  <section id="questions" class="list"></section>
+  <div id="live-feedback" class="sr-only" role="status" aria-live="polite"></div>
+</main>
+<script>
+  'use strict';
+  const questions = [
+    {a:'<span class="math-inline"><var>n</var></span> is divisible by 4.',b:'<span class="math-inline"><var>n</var></span> is even.',answer:'⇒'},
+    {a:'<span class="formula"><var>x</var><sup>2</sup> = 9</span>',b:'<span class="formula"><var>x</var> = 3</span>',answer:'⇐'},
+    {a:'<span class="math-inline"><var>n</var></span> is divisible by 6.',b:'<span class="math-inline"><var>n</var></span> is divisible by both 2 and 3.',answer:'⇔'},
+    {a:'<span class="formula"><var>x</var> &gt; 1</span>',b:'<span class="formula"><var>x</var><sup>2</sup> &gt; 1</span>',answer:'⇒'},
+    {a:'<span class="math-inline"><var>n</var><sup>2</sup></span> is odd.',b:'<span class="math-inline"><var>n</var></span> is odd.',answer:'⇔'},
+    {a:'A triangle has at least two sides of equal length.',b:'The triangle is equilateral.',answer:'⇐'},
+    {a:'<span class="formula"><var>x</var><var>y</var> = 0</span>',b:'<span class="formula"><var>x</var> = 0</span>',answer:'⇐'},
+    {a:'A quadrilateral is a square.',b:'The quadrilateral is a rectangle.',answer:'⇒'},
+    {a:'<span class="formula"><var>x</var><sup>2</sup> &lt; 9</span>',b:'<span class="formula">−3 &lt; <var>x</var> &lt; 3</span>',answer:'⇔'}
+  ];
+  const symbols = ['⇒','⇐','⇔'];
+  const area = document.getElementById('questions');
+  const feedback = document.getElementById('live-feedback');
+  let state = questions.map(() => ({selected: null, submitted: false}));
+
+  function render() {
+    area.innerHTML = questions.map((q, i) => `
+      <article class="card" data-question="${i}">
+        <div class="pair">
+          <div class="statement"><span class="statement-text">${q.a}</span></div>
+          <div class="slot" data-slot aria-label="Empty implication symbol">□</div>
+          <div class="statement"><span class="statement-text">${q.b}</span></div>
+        </div>
+        <div class="controls">
+          <div class="choices" role="group" aria-label="Choose implication symbol for question ${i+1}">
+            ${symbols.map(sym => `<button type="button" class="choice" data-symbol="${sym}" aria-pressed="false" aria-label="${sym === '⇒' ? 'Implies' : sym === '⇐' ? 'Implied by' : 'Equivalent'}">${sym}</button>`).join('')}
+          </div>
+          <button type="button" class="submit" disabled>Submit</button>
+        </div>
+      </article>`).join('');
+  }
+
+  area.addEventListener('click', event => {
+    const card = event.target.closest('.card');
+    if (!card) return;
+    const i = Number(card.dataset.question);
+    if (state[i].submitted) return;
+    const choice = event.target.closest('.choice');
+    if (choice) {
+      const symbol = choice.dataset.symbol;
+      state[i].selected = symbol;
+      card.querySelectorAll('.choice').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.symbol === symbol)));
+      const slot = card.querySelector('.slot');
+      slot.classList.add('selected');
+      slot.textContent = symbol;
+      slot.setAttribute('aria-label', 'Selected ' + symbol);
+      card.querySelector('.submit').disabled = false;
+      return;
+    }
+    if (event.target.closest('.submit')) {
+      const selected = state[i].selected;
+      if (!selected) return;
+      state[i].submitted = true;
+      const correct = selected === questions[i].answer;
+      card.classList.add(correct ? 'correct' : 'incorrect');
+      const slot = card.querySelector('.slot');
+      if (correct) {
+        slot.textContent = selected;
+        slot.setAttribute('aria-label', 'Correct: ' + selected);
+        feedback.textContent = 'Question ' + (i + 1) + ': correct.';
+      } else {
+        const wrong = document.createElement('span');
+        wrong.className = 'wrong-symbol';
+        wrong.textContent = selected;
+        const right = document.createElement('span');
+        right.className = 'correct-symbol';
+        right.textContent = questions[i].answer;
+        slot.replaceChildren(wrong, right);
+        slot.setAttribute('aria-label', 'Incorrect: ' + selected + '. Correct: ' + questions[i].answer);
+        feedback.textContent = 'Question ' + (i + 1) + ': incorrect. Correct symbol: ' + questions[i].answer;
+      }
+      card.querySelectorAll('button').forEach(btn => { btn.disabled = true; });
+    }
+  });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    state = questions.map(() => ({selected: null, submitted: false}));
+    feedback.textContent = '';
+    render();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  });
+  render();
+</script>
+</body>
+</html>
